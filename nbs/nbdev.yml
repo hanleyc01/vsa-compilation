@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "vsa-compilation"
+  site-url: "https://hanleyc01.github.io/vsa-compilation"
+  description: "Compilation of programming languages to VSAs"
+  repo-branch: main
+  repo-url: "https://github.com/hanleyc01/vsa-compilation"
