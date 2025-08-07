@@ -14,4 +14,4 @@ readme:
 	uv run nbdev_readme
 
 precommit:
-	uv run nbdev_install_hooks
+	uv run prepare
