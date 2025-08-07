@@ -5,4 +5,5 @@ d = { 'settings': { 'branch': 'main',
                 'doc_host': 'https://hanleyc01.github.io',
                 'git_url': 'https://github.com/hanleyc01/vsa-compilation',
                 'lib_path': 'vsa_compilation'},
-  'syms': {'vsa_compilation.core': {'vsa_compilation.core.foo': ('core.html#foo', 'vsa_compilation/core.py')}}}
+  'syms': { 'vsa_compilation.core': { 'vsa_compilation.core.foo': ('vsas.html#foo', 'vsa_compilation/core.py'),
+                                      'vsa_compilation.core.say_hello': ('vsas.html#say_hello', 'vsa_compilation/core.py')}}}
