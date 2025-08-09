@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.33">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Introduction to Vector-Symbolic Architectures.">
+
+<title>An Introduction to VSAs – vsa-compilation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-e16dd29f819a46fcdaa82e3575888691.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="An Introduction to VSAs – vsa-compilation">
+<meta property="og:description" content="Introduction to Vector-Symbolic Architectures.">
+<meta property="og:image" content="https://hanleyc01.github.io/vsa-compilation/00_vsas_files/figure-html/cell-4-output-1.png">
+<meta property="og:site_name" content="vsa-compilation">
+<meta property="og:image:height" content="411">
+<meta property="og:image:width" content="389">
+<meta name="twitter:title" content="An Introduction to VSAs – vsa-compilation">
+<meta name="twitter:description" content="Introduction to Vector-Symbolic Architectures.">
+<meta name="twitter:image" content="https://hanleyc01.github.io/vsa-compilation/00_vsas_files/figure-html/cell-4-output-1.png">
+<meta name="twitter:image-height" content="411">
+<meta name="twitter:image-width" content="389">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">vsa-compilation</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./vsas.html">An Introduction to VSAs</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction to Compilation with VSAs.</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./vsas.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">An Introduction to VSAs</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./syntax.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basics of representing syntax with VSAs</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpretation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basics of Interpretation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lisp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Encoding LISP in VSAs</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./forth.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Encoding FORTH in VSAs</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#whats-a-vsa" id="toc-whats-a-vsa" class="nav-link active" data-scroll-target="#whats-a-vsa">What’s a VSA</a>
+  <ul class="collapse">
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul></li>
+  <li><a href="#holographic-reduced-representations." id="toc-holographic-reduced-representations." class="nav-link" data-scroll-target="#holographic-reduced-representations.">Holographic Reduced Representations.</a></li>
+  <li><a href="#coding-it-up" id="toc-coding-it-up" class="nav-link" data-scroll-target="#coding-it-up">Coding it up!</a></li>
+  <li><a href="#the-abstract-syntax-of-mathcall." id="toc-the-abstract-syntax-of-mathcall." class="nav-link" data-scroll-target="#the-abstract-syntax-of-mathcall.">The Abstract Syntax of <span class="math inline">\(\mathcal{L}\)</span>.</a></li>
+  <li><a href="#summary-1" id="toc-summary-1" class="nav-link" data-scroll-target="#summary-1">Summary</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/hanleyc01/vsa-compilation/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="vsas.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">An Introduction to VSAs</h1>
+</div>
+
+<div>
+  <div class="description">
+    Introduction to Vector-Symbolic Architectures.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<section id="whats-a-vsa" class="level1">
+<h1>What’s a VSA</h1>
+<p>In this project we are going to be using Vector-Symbolic Architectures (VSAs), or, Hyperdimensional Computing (HDC) to encode the symbolic syntax of a programming language in high-dimensional vector space. But, what is a VSA? A VSA first provides a method for mapping symbols to high-dimensional vector. Suppose that we have a language <span class="math inline">\(\mathcal{L}\)</span> which has three atomic elements: <span class="math inline">\(\texttt{banana}\)</span>, <span class="math inline">\(\texttt{strawberry}\)</span>, and <span class="math inline">\(\texttt{apple}\)</span>. The language might have some further ways for composing these representations, and we will investigate how to represent these later, but for right now we will focus only on the atomic elements of the language.</p>
+<p>The first step for doing VSA computation is to create a mapping <span class="math inline">\(f\)</span> which maps from the language <span class="math inline">\(\mathcal{L}\)</span> to the high-dimensional vector space <span class="math inline">\(V^D\)</span>. For simplicity, we will be considering only the vector space <span class="math inline">\(\mathbb{R}^D\)</span>, but there are other VSAs which use different vector spaces. For atomic elements, the mapping <span class="math inline">\(f\)</span> takes symbols in <span class="math inline">\(\mathcal{L}\)</span> to rows to the <span class="math inline">\(N\)</span> rows (one for each atomic element) of <span class="math inline">\(D\)</span>-dimension in the matrix <span class="math inline">\(X\)</span> called the <em>codebook</em>: <span class="math display">\[
+X = [x_1, x_2, \dots, x_N],
+\tag{1}
+\]</span> and for some atomic <span class="math inline">\(s \in \mathcal{L}\)</span>, <span class="math inline">\(f(s) = x_i\)</span>.</p>
+<blockquote class="blockquote">
+<p>We are being very informal about the definition of the syntax but later on we will be more formal by providing an actual inductive definition.</p>
+</blockquote>
+<p>Now that we have high-dimensional representations of each of the symbols, how can we compose them? First, let us extend <span class="math inline">\(\mathcal{L}\)</span> by adding the operator <span class="math inline">\((\cdot, \cdot)\)</span>, which creates a “tuple” of elements in <span class="math inline">\(\mathcal{L}\)</span>. For example, the tuple of <span class="math inline">\(\texttt{banana}\)</span> and <span class="math inline">\(\texttt{apple}\)</span> is: <span class="math display">\[
+t = ( \texttt{banana},~\texttt{apple}).
+\tag{2}
+\]</span></p>
+<p>Intuitively, <span class="math inline">\(t \neq \text{apple} \neq \text{banana}\)</span>, even though <span class="math inline">\(t\)</span> is composed of the atomic elements <span class="math inline">\(\texttt{apple}\)</span> and <span class="math inline">\(\texttt{banana}\)</span>. Therefore, we need some function <span class="math inline">\(d\)</span> defined over <span class="math inline">\(X\)</span> such that for <span class="math inline">\(x_i, x_j\)</span>, <span class="math display">\[
+d (x_i, x_j) = \begin{cases}
+    &amp;1,~\text{if}~f^{-1}(x_i) = f^{-1}(x_j), \\
+    &amp;0,~\text{otherwise}.
+\end{cases}
+\tag{3}
+\]</span> Given that we are in <span class="math inline">\(\mathbb{R}^D\)</span>, define <span class="math inline">\(d(x_i, x_j) = \frac{x_i \cdot x_j}{\|x_i\|\|x_j\|}\)</span>, or the <em>cosine similarity</em>. This immediately gives us a function that is <span class="math inline">\(1\)</span> iff <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span> are identical, and interpolates to <span class="math inline">\(0\)</span> as the vectors become more “dissimilar”.</p>
+<p>Given that <span class="math inline">\(D\)</span> is high-dimensional, the “blessing of dimensionality” means that each <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span>, <span class="math inline">\(i \neq j\)</span> are “pseudo-orthogonal”, meaning, it is more likely than not that they are dissimilar up to some constant <span class="math inline">\(\vartheta\)</span>: <span class="math display">\[
+d(x_i, x_j) = 0 + \vartheta.
+\tag{4}
+\]</span> In order to encode the tuple function, we have to create a new representation <em>out</em> of the component elements which is dissimilar to the component elements. We can achieve this by an operation called <em>bind</em>, where the <em>binding</em> of elements <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span>, denoted by <span class="math inline">\(x_i \otimes x_j\)</span>, is such that: <span class="math display">\[
+\begin{align*}
+d(x_i \otimes x_j, x_i) &amp;= 0 + \vartheta, \\
+d(x_i \otimes x_j, x_j) &amp;= 0 + \vartheta.
+\end{align*}
+\tag{5}
+\]</span> Furthermore, <em>bind</em> must be invertible, where we have: <span class="math display">\[
+\begin{align*}
+(x_i \otimes x_j) \otimes^{-1} x_i &amp;= x_j + \kappa, \\
+(x_i \otimes x_j) \otimes^{-1} x_j &amp;= x_i + \kappa,
+\end{align*}
+\tag{6}
+\]</span> with <span class="math inline">\(\kappa\)</span> being a noise term. This invertability is gives us the ability to extract component elements of the tuple.</p>
+<p>With binding defined, we can encode <span class="math inline">\(t\)</span> from (2): <span class="math display">\[
+\begin{align*}
+f((\texttt{banana},~\texttt{apple})) &amp;= f(\texttt{banana}) \otimes f(\texttt{apple}), \\
+&amp;= x_i \otimes x_j.
+\end{align*}
+\tag{7}
+\]</span></p>
+<p>For the final key component, let’s add another operator <span class="math inline">\((\cdot \lor \cdot)\)</span>, called <em>disjunction</em>. We can read this as “either …, or …” of other elements in <span class="math inline">\(\mathcal{L}\)</span>. While tuples like <span class="math inline">\(t\)</span> are completely dissimlar to their component elements, disjunctions can either be one of their elements or the other. For the sake of this model, we’ll say that we want the disjunction of element <span class="math inline">\(s_1 \in \mathcal{L}\)</span> and element <span class="math inline">\(s_2 \in
+\mathcal{L}\)</span> to be similar to components. In high-dimensional vector space, this can be encoded as <em>superposition</em>, where for two vectors <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span>, the <em>superposition</em> of <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span>, denoted <span class="math inline">\(x_i \oplus x_j\)</span> is such that: <span class="math display">\[
+\begin{align*}
+d((x_i \otimes x_i), x_i) &amp;= 1 - \vartheta , \\
+d((x_i \otimes x_j), x_j) &amp;= 1 - \vartheta.
+\end{align*}
+\tag{8}
+\]</span> With this defined, we can define the mapping <span class="math inline">\(f\)</span> over disjunctions as: <span class="math display">\[
+\begin{align*}
+f((\texttt{banana},~\texttt{apple})) &amp;= f(\texttt{banana}) \oplus f(\texttt{apple}) \\
+&amp;= x_i \oplus x_j.
+\end{align*}
+\tag{9}
+\]</span> These three functions are the core of VSAs, and give us incredible expressive capacity.</p>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>VSAs are a model of symbolic structures which are able to express compositional relationships between symbols as functions defined over high-dimensional vector space. The key three operations used to encode these symbolic relations are:</p>
+<ol type="1">
+<li><p><strong>Similarity</strong>: similarity between two high-dimensional vectors in Eq’n.&nbsp;(3), which is close to <span class="math inline">\(1\)</span> when they are “the same” and close to <span class="math inline">\(0\)</span> when they aren’t.</p></li>
+<li><p><strong>Binding</strong>: binding composes elements into a new, distinct symbol from their component parts. Binding satisfies the properties in Eq’n.&nbsp;(5).</p></li>
+<li><p><strong>Superposition</strong>: also called <em>bundling</em> (as a dual with binding), that makes a new high-dimensional vector which is similar to the component elements, satisfying the properties in Eq’n.&nbsp;(8).</p></li>
+</ol>
+<p>For the language <span class="math inline">\(\mathcal{L}\)</span> defined as the minimal set which satisfies the following properties:</p>
+<ol type="1">
+<li><p>Atomic elements <span class="math inline">\(\mathcal{A} = \{\texttt{apple},~\texttt{banana},~\texttt{strawberry}\}\)</span> are in the set.</p></li>
+<li><p>If <span class="math inline">\(s \in \mathcal{L}\)</span> and <span class="math inline">\(z \in \mathcal{L}\)</span>, then the <em>tuple</em> <span class="math inline">\((s, z)\)</span> is also in <span class="math inline">\(\mathcal{L}\)</span>.</p></li>
+<li><p>If <span class="math inline">\(s \in \mathcal{L}\)</span> and <span class="math inline">\(z \in \mathcal{L}\)</span>, then the <em>disjunction</em> <span class="math inline">\((s \lor z)\)</span> is in <span class="math inline">\(\mathcal{L}\)</span>.</p></li>
+<li><p>Anything not satisfying the above requirements is not in <span class="math inline">\(\mathcal{L}\)</span>.</p></li>
+</ol>
+<p>We can define the encoding function <span class="math inline">\(f(\mathcal{L}) = \mathbb{R}^D\)</span> inductively:</p>
+<ol type="1">
+<li><p>If <span class="math inline">\(x\)</span> is in <span class="math inline">\(\mathcal{A}\)</span>, then <span class="math inline">\(f(x) = x_i\)</span>, for <span class="math inline">\(D\)</span>-dimensional row vector in the codebook <span class="math inline">\(X\)</span>.</p></li>
+<li><p>If <span class="math inline">\(\phi \in \mathcal{L}\)</span> and <span class="math inline">\(\psi \in \mathcal{L}\)</span>, then <span class="math display">\[
+f((\phi, \psi)) = f(\phi) \otimes f(\psi).
+\]</span></p></li>
+<li><p>If <span class="math inline">\(\phi \in \mathcal{L}\)</span> and <span class="math inline">\(\psi \in \mathcal{L}\)</span>, then, <span class="math display">\[
+f ((\phi \lor \psi)) = f(\phi) \oplus f(\psi).
+\]</span></p></li>
+</ol>
+</section>
+</section>
+<section id="holographic-reduced-representations." class="level1">
+<h1>Holographic Reduced Representations.</h1>
+<p>Holographic Reduced Representations (HRRs) will our VSA of choice for this project <a href="https://pages.ucsd.edu/~msereno/170/readings/06-Holographic.pdf">(Plate, 1995)</a>.</p>
+<p>HRRs use high-dimensional vectors in real space. For the binding operator, we use circular convolution. Because circular convolution is component-wise multiplication in Fourier space, we implement it using the simple: <span class="math display">\[
+x \otimes y = \mathfrak{R}\left\{
+    \mathcal{F^{-1}}\left[
+        \mathcal{F}(x) \mathcal{F}(y)
+        \right]
+\right\},
+\tag{10}
+\]</span> with <span class="math inline">\(\mathfrak{R}\)</span> denoting the <em>real</em> components of the vector, discarding the complex components; <span class="math inline">\(\mathcal{F}\)</span> the Fourier transform, and <span class="math inline">\(\mathcal{F}^{-1}\)</span> the <em>inverse</em> Fourier transform.</p>
+<p>For the similarity measure we use cosine similarity, and for superposition we use component-wise addition.</p>
+</section>
+<section id="coding-it-up" class="level1">
+<h1>Coding it up!</h1>
+<p>The definition above was a little bit abstract, but it should become clearer once we have a coding implementation in our hands. We’re going to use <code>numpy</code> as our numerical processing library, though we could do any other (if we like).</p>
+<div id="cell-5" class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HRR(np.ndarray):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Thin wrapper around `np.ndarray` for Holographic Reduced Representations</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">    (HRRs).</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Incantation needed for subclassing `np.ndarray`.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__new__</span>(cls, input_array) <span class="op">-&gt;</span> <span class="bu">object</span>:</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        obj <span class="op">=</span> np.asarray(input_array).view(cls)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> obj</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Same as above</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> __array_finalize__(<span class="va">self</span>, obj: <span class="bu">object</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> obj <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The binding operation.</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> bind(<span class="va">self</span>, other: typing.Union[np.ndarray, <span class="st">"HRR"</span>]) <span class="op">-&gt;</span> <span class="st">"HRR"</span>:</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Perform circular convolution.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">        Args:</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">            other (np.ndarray): Second argument.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">        Returns:</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">            Circular convolution of the vector and the other.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co">        """</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ifft(fft(<span class="va">self</span>) <span class="op">*</span> fft(other)).real.view(HRR)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> inverse(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="st">"HRR"</span>:</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Invert the vector for unbinding."""</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>[np.r_[<span class="dv">0</span>, <span class="va">self</span>.size <span class="op">-</span> <span class="dv">1</span> : <span class="dv">0</span> : <span class="op">-</span><span class="dv">1</span>]].view(HRR)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> cosine_similarity(<span class="va">self</span>, other: typing.Union[np.ndarray, <span class="st">"HRR"</span>]) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">float</span>((<span class="va">self</span>.dot(other)) <span class="op">/</span> (np.linalg.norm(<span class="va">self</span>) <span class="op">*</span> np.linalg.norm(other)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We also need a way of generating new vectors. This function helps us create arbitrary new symbols for each atomic symbol in the language <span class="math inline">\(\mathcal{L}\)</span>. To do this, we sample elements from the normal distribution: <span class="math display">\[
+\mathcal{N}\left(\mu=1, \sigma = \frac{1}{d}\right),
+\]</span> and then normalize them to unit magnitude.</p>
+<div id="cell-7" class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> random(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    num_vectors: <span class="bu">int</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dim: <span class="bu">int</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    dtype: npt.DTypeLike <span class="op">=</span> <span class="bu">float</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    rng<span class="op">=</span>np.random.default_rng(),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="st">"HRR"</span>:</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">r"""Create matrix of `n` `d`-dimensional HRR vectors, sampled from the normal</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    distribution,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    $$</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    </span><span class="er">\</span><span class="co">mathcal{N}(</span><span class="er">\</span><span class="co">mu=1, </span><span class="er">\</span><span class="co">sigma^2 = </span><span class="ch">\f</span><span class="co">rac{1}{d}),</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    $$</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">        num_vectors int: The number of vector symbols you wish to generate.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">        dim int: The dimension of the vector symbols.</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">        dtype npt.DTypeLike: The `dtype` of the vector generated. Default: ``float``.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">        rng: Random number generator.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">        A ``(num_vectors, dim)`` matrix of random vector symbols.</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    sd <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> np.sqrt(dim)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    vs <span class="op">=</span> rng.normal(scale<span class="op">=</span>sd, size<span class="op">=</span>(num_vectors, dim)).astype(dtype)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    norms <span class="op">=</span> np.linalg.vector_norm(vs, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    vs <span class="op">/=</span> norms</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> HRR.<span class="fu">__new__</span>(cls<span class="op">=</span>HRR, input_array<span class="op">=</span>vs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can inspect some randomly generated vectors.</p>
+<div id="cell-9" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> random(<span class="dv">2</span>, <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> display_im(x, title<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    plt.imshow(x.reshape(<span class="dv">28</span>, <span class="dv">28</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> title:</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        plt.title(title)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    plt.xticks([])</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    plt.yticks([])</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>display_im(X[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"Randomly Generated Normal Vector"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="00_vsas_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can also test our important measures: similarity, binding, and superposition.</p>
+<div id="cell-11" class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>x_0 <span class="op">=</span> X[<span class="dv">0</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>x_1 <span class="op">=</span> X[<span class="dv">1</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cosine similarity between x_0 and x_1: </span><span class="sc">{</span>x_0<span class="sc">.</span>cosine_similarity(x_1)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> x_0.bind(x_1)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cosine similarity between x_0 and (x_0 * x_1): </span><span class="sc">{</span>x_0<span class="sc">.</span>cosine_similarity(t)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>unbound <span class="op">=</span> t.bind(x_1.inverse())</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cosine similarity between (t / x_1) and x_0: </span><span class="sc">{</span>unbound<span class="sc">.</span>cosine_similarity(x_0)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>spose <span class="op">=</span> x_0 <span class="op">+</span> x_1</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cosine similarity between x_0 and (x_0 + x_1): </span><span class="sc">{</span>spose<span class="sc">.</span>cosine_similarity(x_0)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Cosine similarity between x_0 and x_1: -0.004668307104146607
+Cosine similarity between x_0 and (x_0 * x_1): 0.1232672204723025
+Cosine similarity between (t / x_1) and x_0: 0.6961395290534296
+Cosine similarity between x_0 and (x_0 + x_1): 0.7054543546168858</code></pre>
+</div>
+</div>
+</section>
+<section id="the-abstract-syntax-of-mathcall." class="level1">
+<h1>The Abstract Syntax of <span class="math inline">\(\mathcal{L}\)</span>.</h1>
+<p>Now that we have the basics of VSAs. In fashion that will become more typical, we will define the <em>abstract syntax</em> of our language <span class="math inline">\(\mathcal{L}\)</span>. Recall, <span class="math inline">\(\mathcal{L}\)</span> has three basic parts: the atomic elements <span class="math inline">\(\mathcal{A}\)</span>, tuples, and disjunctions.</p>
+<p>We will define a representation for each of these, and then define an <em>encoding</em> function <span class="math inline">\(f\)</span> that maps these representations onto HRRs.</p>
+<div id="cell-13" class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> abc <span class="im">import</span> ABCMeta</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> L(metaclass<span class="op">=</span>ABCMeta):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Abstract base class of our language L."""</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Atomic(L):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Abstract base class of atomic elements in the language."""</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Tuple(L):</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Tuples in L."""</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    lhs: L</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    rhs: L</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Disjunction(L):</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Disjunctions in L."""</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    lhs: L</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    rhs: L</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_codebook(atomic_symbols: <span class="bu">list</span>[<span class="bu">str</span>], dim: <span class="bu">int</span>) <span class="op">-&gt;</span> HRR:</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Create a codebook of atomic symbols.</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="co">        atomic_symbols list[str]: The list of atomic symbols in the language.</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="co">        dim int: The dimension of the vector symbols corresponding to the atomic symbols.</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="co">        A ``(len(atomic_symbols), dim)`` matrix codebook.</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>    N, D <span class="op">=</span> <span class="bu">len</span>(atomic_symbols), dim</span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> random(N, D)</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> encode(expression: L, atomic_symbols: <span class="bu">list</span>[<span class="bu">str</span>], codebook: HRR) <span class="op">-&gt;</span> HRR:</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>    <span class="co">r"""Encode an expression in $</span><span class="er">\</span><span class="co">mathcal{L}$ to HRR.</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co">        expression L: The expression to encode.</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="co">        atomic_symbols list[str]: The list of atomic symbols.</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="co">        codebook HRR: ``(len(atomic_symbols), D)`` matrix codebook.</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="co">        The encoded form of the symbol.</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(expression, L):</span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">TypeError</span>(<span class="st">"Expected argument to subclass `L`"</span>, expression)</span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Base case</span></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(expression, Atomic):</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>        name <span class="op">=</span> expression.name</span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a>        name_idx <span class="op">=</span> atomic_symbols.index(name)</span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> codebook[name_idx]</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Inductive cases</span></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> <span class="bu">isinstance</span>(expression, Tuple):</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a>        lhs <span class="op">=</span> expression.lhs</span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a>        rhs <span class="op">=</span> expression.rhs</span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> encode(lhs, atomic_symbols, codebook).bind(</span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a>            encode(rhs, atomic_symbols, codebook)</span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> <span class="bu">isinstance</span>(expression, Disjunction):</span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a>        lhs <span class="op">=</span> expression.lhs</span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a>        rhs <span class="op">=</span> expression.rhs</span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> encode(lhs, atomic_symbols, codebook) <span class="op">+</span> encode(</span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a>            rhs, atomic_symbols, codebook</span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a>        )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s test out our definitions to see if they maintain the same properties that we expect: namely,</p>
+<ol type="1">
+<li><p>Atomic symbols should be self-similar, but very dissimlar to other atomic symbols.</p></li>
+<li><p>We should be able to retrieve the component parts of tuples.</p></li>
+<li><p>And, disjunctions should be similar to both component parts.</p></li>
+</ol>
+<div id="cell-15" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dim <span class="op">=</span> <span class="dv">400</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>apple <span class="op">=</span> Atomic(<span class="st">"apple"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>strawberry <span class="op">=</span> Atomic(<span class="st">"strawberry"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>banana <span class="op">=</span> Atomic(<span class="st">"banana"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>atomic_names <span class="op">=</span> [<span class="st">"apple"</span>, <span class="st">"strawberry"</span>, <span class="st">"banana"</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> create_codebook(atomic_names, dim)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>X<span class="sc">.</span>shape <span class="op">=</span> <span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>enc_apple <span class="op">=</span> encode(apple, atomic_names, X)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>enc_straw <span class="op">=</span> encode(strawberry, atomic_names, X)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>enc_banana <span class="op">=</span> encode(banana, atomic_names, X)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>enc_apple<span class="sc">.</span>cosine_similarity(enc_apple) <span class="op">=</span> <span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>enc_apple<span class="sc">.</span>cosine_similarity(enc_straw) <span class="op">=</span> <span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>X.shape = (3, 400)
+enc_apple.cosine_similarity(enc_apple) = 1.0000000000000002
+enc_apple.cosine_similarity(enc_straw) = 0.00039153428747147444</code></pre>
+</div>
+</div>
+<div id="cell-16" class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> Tuple(banana, apple)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>enc_t <span class="op">=</span> encode(t, atomic_names, X)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tuple similarity with encoded_apple: </span><span class="sc">{</span>enc_t<span class="sc">.</span>cosine_similarity(enc_apple)<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"Tuple similarity with encoded_banana: </span><span class="sc">{</span>enc_t<span class="sc">.</span>cosine_similarity(enc_banana)<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Tuple similarity with encoded_apple: 0.09
+Tuple similarity with encoded_banana: 0.03</code></pre>
+</div>
+</div>
+<div id="cell-17" class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> Disjunction(banana, apple)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>enc_d <span class="op">=</span> encode(d, atomic_names, X)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"Disjunction similarity with encoded_apple: </span><span class="sc">{</span>enc_d<span class="sc">.</span>cosine_similarity(enc_apple)<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"Disjunction similarity with encoded_banana: </span><span class="sc">{</span>enc_d<span class="sc">.</span>cosine_similarity(enc_banana)<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Disjunction similarity with encoded_apple: 0.72
+Disjunction similarity with encoded_banana: 0.72</code></pre>
+</div>
+</div>
+</section>
+<section id="summary-1" class="level1">
+<h1>Summary</h1>
+<p>In this section we introduced Vector-Symbolic Architectures or Hyperdimensional Computing: what kinds of operations they use, and the motivation behind them. We also discussed some basics about representing the abstract syntax of a language. In the next section, we will be investigating the more general question: given language <span class="math inline">\(\mathcal{L}\)</span>, how do we define a one-to-one mapping from <span class="math inline">\(\mathcal{L}\)</span> to <span class="math inline">\(\mathbb{R}^D\)</span>?</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/hanleyc01\.github\.io\/vsa-compilation");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/hanleyc01/vsa-compilation/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
